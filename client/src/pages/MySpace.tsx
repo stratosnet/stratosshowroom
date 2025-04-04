@@ -376,7 +376,7 @@ export default function MySpace() {
             ))}
             {mediaData.videos.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                No share links available
+                No videos available
               </div>
             )}
           </div>
@@ -398,7 +398,7 @@ export default function MySpace() {
             ))}
             {mediaData.audios.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                No share links available
+                No audios available
               </div>
             )}
           </div>
@@ -420,7 +420,7 @@ export default function MySpace() {
             ))}
             {mediaData.pictures.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                No share links available
+                No pictures available
               </div>
             )}
           </div>
@@ -442,7 +442,7 @@ export default function MySpace() {
             ))}
             {mediaData.files.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                No share links available
+                No files available
               </div>
             )}
           </div>
