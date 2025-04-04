@@ -374,6 +374,11 @@ export default function MySpace() {
                 <VideoCard video={video} />
               </div>
             ))}
+            {mediaData.videos.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No share links available
+              </div>
+            )}
           </div>
         )}
 
@@ -391,6 +396,11 @@ export default function MySpace() {
                 <AudioPlayer music={audio} />
               </div>
             ))}
+            {mediaData.audios.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No share links available
+              </div>
+            )}
           </div>
         )}
 
@@ -408,6 +418,11 @@ export default function MySpace() {
                 <PictureCard picture={picture} />
               </div>
             ))}
+            {mediaData.pictures.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No share links available
+              </div>
+            )}
           </div>
         )}
 
@@ -425,6 +440,11 @@ export default function MySpace() {
                 <FileDataCard file={file} />
               </div>
             ))}
+            {mediaData.files.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No share links available
+              </div>
+            )}
           </div>
         )}
         {activeTab === "sharelinks" && (
