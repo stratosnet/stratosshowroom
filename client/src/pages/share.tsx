@@ -276,8 +276,8 @@ export default function SharePage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-500 text-xl mb-4"></div>
-          <p className="text-gray-600">Oops!</p>
+          <div className="text-red-500 text-xl mb-4">Oops!</div>
+          <p className="text-gray-600">{error}</p>
         </div>
       </div>
     );
