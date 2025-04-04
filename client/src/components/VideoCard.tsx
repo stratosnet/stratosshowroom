@@ -72,7 +72,7 @@ const VideoCard = ({ video, featured = false }: VideoCardProps) => {
               duration={video.duration}
               className="w-full h-full"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+            {/* <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div> */}
             <button className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-primary/90 hover:bg-primary w-16 h-16 rounded-full flex items-center justify-center">
               <svg
                 className="w-8 h-8 text-white"
@@ -112,6 +112,7 @@ const VideoCard = ({ video, featured = false }: VideoCardProps) => {
       <div className="rounded-lg overflow-hidden group cursor-pointer h-full">
         <div className="relative">
           <VideoThumbnail
+            key={video.id}
             thumbnailUri={video.fileHash}
             fileHash={video.fileHash}
             title={video.title}

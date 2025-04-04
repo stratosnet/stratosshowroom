@@ -1,6 +1,28 @@
 import { useEffect, useState } from "react";
 import { Video } from "@shared/schema";
 import { getFileUri } from "../lib/stratosSdk";
+import VideoCard from "@/components/VideoCard";
+import AudioPlayer from "@/components/AudioPlayer";
+import PictureCard from "@/components/PictureCard";
+import FileDataCard from "@/components/FileDataCard";
+import { getMySpaceDataByType, ShareLink } from "@/utils/localStorageData";
+import { Button } from "@/components/ui/button";
+import { addMySpaceItemAutoType } from "@/utils/localStorageData";
+import { v4 as uuidv4 } from "uuid";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { json } from "stream/consumers";
+import ShareLinkCard from "@/components/ShareLinkCard";
+import { useShare } from "@/contexts/ShareContext";
 
 interface SharedData {
   videos: Video[];
@@ -13,15 +35,35 @@ export default function SharePage() {
   const [data, setData] = useState<SharedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInMySpace, setIsInMySpace] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState("");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [shareTitle, setShareTitle] = useState("");
+  const [shareDescription, setShareDescription] = useState("");
+  const [sharedlinksWithMeList, setSharedlinksWithMeList] = useState<
+    ShareLink[]
+  >([]);
+  const [jsonParam, setJsonParam] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const params = new URLSearchParams(window.location.search);
         const jsonParam = params.get("json");
-
+        setJsonParam(jsonParam || null);
         if (!jsonParam) {
-          setError("No files provided");
+          const sharelinks = (await getMySpaceDataByType(
+            "sharelinks"
+          )) as ShareLink[];
+          const sharedlinksWithMeList = sharelinks.filter((sharelink) => {
+            return !sharelink.isMySpace;
+          });
+          setSharedlinksWithMeList(sharedlinksWithMeList);
+          if (sharedlinksWithMeList.length === 0) {
+            setError("No files provided");
+            setLoading(false);
+            return;
+          }
           setLoading(false);
           return;
         }
@@ -144,6 +186,81 @@ export default function SharePage() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const init = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const jsonParam = params.get("json");
+      setCurrentUrl(window.location.href);
+      const isMySpace = await checkIsMySpace();
+      setIsInMySpace(isMySpace);
+    };
+    init();
+  }, []);
+
+  const checkIsMySpace = async () => {
+    const sharelinks = (await getMySpaceDataByType(
+      "sharelinks"
+    )) as ShareLink[];
+    const params = new URLSearchParams(window.location.search);
+    const jsonParam = params.get("json") || "no json";
+
+    const isMySpace = sharelinks.some((sharelink) => {
+      const sharelinkUrl = sharelink.url?.split("share?json=")[0]; // http://localhost:3003
+      const jsonParamWithoutShareLink = sharelink.url?.replace(
+        sharelinkUrl + "share?json=",
+        ""
+      );
+      console.log("sharelink.url");
+      console.log(sharelink.url);
+      console.log("sharelinkUrl");
+      console.log(sharelinkUrl);
+      console.log("jsonParamWithoutShareLink");
+      console.log(jsonParamWithoutShareLink);
+      console.log("jsonParam");
+      console.log(jsonParam);
+      return jsonParamWithoutShareLink === jsonParam;
+    });
+    setIsInMySpace(isMySpace);
+    return isMySpace;
+  };
+
+  const handleAddToMySpace = async () => {
+    setIsAddModalOpen(true);
+  };
+
+  const handleConfirmAdd = async () => {
+    try {
+      await addMySpaceItemAutoType({
+        title: shareTitle || "Shared Items",
+        type: "sharelink",
+        description: shareDescription || "Added from share page",
+        url: window.location.href,
+        uuid: uuidv4(),
+        createdAt: new Date().toISOString(),
+        isMySpace: false,
+      });
+      setIsInMySpace(true);
+      setIsAddModalOpen(false);
+      // Reset form
+      setShareTitle("");
+      setShareDescription("");
+    } catch (error) {
+      console.error("Error adding to MySpace:", error);
+    }
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard
+      .writeText(currentUrl)
+      .then(() => {
+        // 可以添加一个提示复制成功的 toast
+        alert("Link copied to clipboard!");
+      })
+      .catch((err) => {
+        console.error("Failed to copy:", err);
+      });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -166,7 +283,38 @@ export default function SharePage() {
     );
   }
 
-  if (!data) {
+  if (!jsonParam && sharedlinksWithMeList) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {sharedlinksWithMeList
+          .filter((sharelink) => sharelink.isMySpace === false)
+          .map((sharelink: ShareLink) => (
+            <ShareLinkCard key={sharelink.id} sharelink={sharelink} />
+          ))}
+      </div>
+      // <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      //   <div className="text-center">
+      //     <div className="text-red-500 text-xl mb-4">dfdfdfdfdf</div>
+      //     <div className="text-gray-600">
+      //       {sharedlinksWithMeList.map((sharelink) => (
+      //         <ShareLinkCard key={sharelink.id} sharelink={sharelink} />
+      //       ))}
+      //     </div>
+      //   </div>
+      // </div>
+    );
+  }
+  if (!jsonParam && !sharedlinksWithMeList) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-xl mb-4">Error</div>
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
+  if (jsonParam && !data) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -177,101 +325,186 @@ export default function SharePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Shared Content</h1>
-          <button
-            onClick={() => {
-              const currentUrl = window.location.href;
-              navigator.clipboard.writeText(currentUrl);
-              alert("Share link copied to clipboard!");
-            }}
-            className="
-              inline-flex items-center 
-              px-4 py-2 
-              border border-gray-300 
-              shadow-sm 
-              text-sm font-medium 
-              rounded-md 
-              text-gray-700 
-              bg-white 
-              hover:bg-gray-50 
-              focus:outline-none 
-              focus:ring-2 
-              focus:ring-offset-2 
-              focus:ring-blue-500
-              transition-all
-              duration-200
-            "
-          >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-              />
-            </svg>
-            Copy Share Link
-          </button>
+    <div className="min-h-screen  ">
+      {/* 如果jsonParam为空，则显示分享内容 */}
+      {/* dd{JSON.stringify(jsonParam)} */}
+      {/* {!jsonParam && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Shared Content</h1>
+          </div>
         </div>
+      )}
+      {!jsonParam && (
+        <div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-900">
+                Shared Content
+              </h1>
+            </div>
+          </div>
+        </div>
+      )} */}
+      {jsonParam && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8  top-4">
+          <div className="">
+            {/* <h1 className="text-3xl font-bold text-gray-900">Shared Content</h1> */}
+            {/* Buttons */}
+            <div className=" flex justify-end">
+              {!isInMySpace ? (
+                <Button
+                  onClick={handleAddToMySpace}
+                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 "
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add to MySpaceded
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleCopyLink}
+                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+                    />
+                  </svg>
+                  Copy Share Link
+                </Button>
+              )}
+            </div>
+          </div>
 
-        <div className="space-y-8">
-          {["Videos", "Audios", "Pictures", "Files"].map((section) => {
-            const sectionKey = section.toLowerCase() as keyof SharedData;
-            const items = data[sectionKey];
-
-            if (items.length === 0) return null;
-
-            return (
-              <div key={section} className="bg-white rounded-lg shadow">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    {section}
-                  </h2>
-                </div>
-                <div className="divide-y divide-gray-200">
-                  {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="px-6 py-4 hover:bg-gray-50 transition-colors duration-200"
-                    >
-                      <div className="flex items-center">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-medium text-gray-900">
-                            {item.title}
-                          </h3>
-                          {item.description && (
-                            <p className="mt-1 text-sm text-gray-500">
-                              {item.description}
-                            </p>
-                          )}
-                        </div>
-                        <div className="ml-4">
-                          <a
-                            href={item.fileUri}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                          >
-                            View
-                          </a>
-                        </div>
-                      </div>
-                    </div>
+          <div className="space-y-8">
+            {/* Videos Section */}
+            {data.videos.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Videos</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {data.videos.map((video) => (
+                    <VideoCard key={video.id} video={video} />
                   ))}
                 </div>
               </div>
-            );
-          })}
+            )}
+
+            {/* Audios Section */}
+            {data.audios.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Audios</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {data.audios.map((audio) => (
+                    <AudioPlayer key={audio.id} music={audio} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Pictures Section */}
+            {data.pictures.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Pictures</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {data.pictures.map((picture) => (
+                    <PictureCard key={picture.id} picture={picture} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Files Section */}
+            {data.files.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Files</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {data.files.map((file) => (
+                    <FileDataCard key={file.id} file={file} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No Items Message */}
+            {data.videos.length === 0 &&
+              data.audios.length === 0 &&
+              data.pictures.length === 0 &&
+              data.files.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No items to display
+                </div>
+              )}
+          </div>
+
+          {/* Add Modal */}
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add to MySpace</DialogTitle>
+                <DialogDescription>
+                  Enter a title and description for this shared content.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="share-title">Title</Label>
+                  <Input
+                    id="share-title"
+                    placeholder="Enter share title"
+                    value={shareTitle}
+                    onChange={(e) => setShareTitle(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="share-description">Description</Label>
+                  <Textarea
+                    id="share-description"
+                    placeholder="Enter share description"
+                    value={shareDescription}
+                    onChange={(e) => setShareDescription(e.target.value)}
+                    className="h-24"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsAddModalOpen(false);
+                    setShareTitle("");
+                    setShareDescription("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleConfirmAdd}>Add to MySpace</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
-      </div>
+      )}
     </div>
   );
 }

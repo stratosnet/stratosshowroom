@@ -25,11 +25,10 @@ const VideoDetail = ({ fileHash: propFileHash }: VideoDetailProps = {}) => {
 
         const fileUri = getFileUri(fileHash);
 
-        // 创建基本的视频对象
         const videoData: Video = {
           id: Date.now(),
           title: `File ${fileHash.slice(0, 8)}...`,
-          description: "Shared via IPFS",
+          description: "",
           fileUri: fileUri,
           fileHash: fileHash,
           type: "video/mp4",
@@ -73,6 +72,7 @@ const VideoDetail = ({ fileHash: propFileHash }: VideoDetailProps = {}) => {
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="aspect-video w-full">
           <VideoPlayer
+            autoplay={true}
             fileHash={video.fileHash}
             directStreamUrl={video.fileUri}
           />
