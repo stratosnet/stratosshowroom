@@ -249,7 +249,23 @@ export async function seedSampleVideo() {
         duration: 0,
         size: 1780,
         category: "Blockchain",
+      },
+      {
+        cid: "",
+        cidUri: "",
+        type: "audio/mpeg",
+        title: "sample song",
+        description: "",
+        fileHash: "QmSS2QLcn2PLMYNrZSz5JfyQQwRk96dLT1n9JoU3LSz2Hg",
+        fileUri: "",
+        duration: 0,
+        size: 7373059,
+        category: "",
       }
+
+
+
+      
     ];
     
     // Process all videos sequentially
