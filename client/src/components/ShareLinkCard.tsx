@@ -6,7 +6,7 @@ interface ShareLinkCardProps {
 
 export default function ShareLinkCard({ sharelink }: ShareLinkCardProps) {
   const handleClick = () => {
-    window.open(sharelink.url, "_blank");
+    window.open(sharelink.url, "_self");
   };
 
   return (
