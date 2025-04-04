@@ -72,6 +72,11 @@ router.get("/", async (req: Request, res: Response) => {
           log(`Video ${video.id} type: ${video.type}, isMatch: ${isMatch}`);
           return isMatch;
         }
+        if (type === "audio") {
+          const isMatch = video.type.startsWith("audio/");
+          log(`Video ${video.id} type: ${video.type}, isMatch: ${isMatch}`);
+          return isMatch;
+        }
         const isMatch = video.type === type;
         log(`Video ${video.id} type: ${video.type}, isMatch: ${isMatch}`);
         return isMatch;
