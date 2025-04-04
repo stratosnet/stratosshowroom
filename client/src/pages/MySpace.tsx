@@ -12,12 +12,37 @@ import {
   getMySpaceData,
   setMySpaceData,
   clearAllMySpaceData,
+  addMySpaceItemAutoType,
+  ShareLink,
+  getMySpaceDataByType,
 } from "@/utils/localStorageData";
-import ShareModal from "@/components/ShareModal";
-
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { v4 as uuidv4 } from "uuid";
+import ShareLinkCard from "@/components/ShareLinkCard";
 // Define media type options
 
 // Define tab options as constant
+
+interface SelectedItems {
+  [key: string]: boolean;
+}
 
 export default function MySpace() {
   const [activeTab, setActiveTab] = useState<MediaType>("videos");
@@ -26,15 +51,21 @@ export default function MySpace() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<SelectedItems>({});
+  const [shareTitle, setShareTitle] = useState("");
+  const [shareDescription, setShareDescription] = useState("");
+  const [showTooltip, setShowTooltip] = useState(false);
 
   // Load data from localStorage on component mount
   useEffect(() => {
-    const loadData = () => {
+    const loadData = async () => {
       try {
-        initData();
-        console.log("savedData", JSON.stringify(mediaData));
+        setIsLoading(true);
+        const savedData = await getMySpaceData();
+        setMediaData(savedData);
+        console.log("Loaded data from IDB:", savedData);
       } catch (error) {
-        console.error("Error loading data from localStorage:", error);
+        console.error("Error loading data from IDB:", error);
       } finally {
         setIsLoading(false);
       }
@@ -42,17 +73,16 @@ export default function MySpace() {
 
     loadData();
   }, []);
-  const initData = () => {
-    const savedData = getMySpaceData();
-    if (savedData) {
+
+  const initData = async () => {
+    try {
+      const savedData = await getMySpaceData();
+      console.log("Init data from IDB:", savedData);
       setMediaData(savedData);
+    } catch (error) {
+      console.error("Error initializing data:", error);
     }
   };
-
-  // Save data to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem("myspace-data", JSON.stringify(mediaData));
-  }, [mediaData]);
 
   const handleUpload = async (
     file: File,
@@ -60,9 +90,125 @@ export default function MySpace() {
     description: string,
     category: string
   ) => {
-    // TODO: Implement file upload logic
-    initData();
-    console.log("Uploading file:", { file, title, description, category });
+    try {
+      setTimeout(() => {
+        initData();
+      }, 100);
+    } catch (error) {
+      console.error("Error in upload:", error);
+    }
+  };
+
+  const handleCheckboxChange = (id: string) => {
+    setSelectedItems((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const handleShareClick = () => {
+    setIsShareModalOpen(true);
+    // Reset form when opening modal
+    setShareTitle("");
+    setShareDescription("");
+  };
+
+  // Method to reset all checkbox selections
+  const resetSelectedItems = () => {
+    setSelectedItems({});
+  };
+
+  // Handle modal close
+  const handleCloseModal = () => {
+    setIsShareModalOpen(false);
+    setShareTitle("");
+    setShareDescription("");
+    resetSelectedItems(); // Reset all selections
+  };
+
+  // Get categorized selected items
+  const getSelectedItemsByType = () => {
+    const selected = {
+      videos: mediaData.videos.filter((video) => selectedItems[video.id]),
+      audios: mediaData.audios.filter((audio) => selectedItems[audio.id]),
+      pictures: mediaData.pictures.filter(
+        (picture) => selectedItems[picture.id]
+      ),
+      files: mediaData.files.filter((file) => selectedItems[file.id]),
+    };
+
+    return selected;
+  };
+
+  // Handle share creation
+  const handleCreateShare = () => {
+    // Process selected items with title and description
+    console.log({
+      title: shareTitle,
+      description: shareDescription,
+      selectedItems: Object.keys(selectedItems).filter(
+        (key) => selectedItems[key]
+      ),
+    });
+
+    let newUrl = createShareLinkUrl();
+    addMySpaceItemAutoType({
+      title: shareTitle,
+      type: "sharelink",
+      description: shareDescription,
+      url: newUrl,
+      uuid: uuidv4(),
+      isMySpace: true,
+    });
+
+    setIsShareModalOpen(false);
+    setShareTitle("");
+    setShareDescription("");
+    resetSelectedItems(); // Reset all selections after successful share creation
+
+    // Instead of copying to clipboard, open in new tab
+    window.open(newUrl, "_blank")?.focus();
+  };
+  const createShareLinkUrl = () => {
+    const selectedData = getSelectedItemsByType();
+
+    const jsonString = JSON.stringify(selectedData);
+
+    //get selectedData data 's fileHash, then put it into the string, split by ;
+    let selectedDataFileHash = selectedData.videos
+      .map((item) => item.fileHash)
+      .join(";");
+    selectedDataFileHash +=
+      ";" + selectedData.audios.map((item) => item.fileHash).join(";");
+    selectedDataFileHash +=
+      ";" + selectedData.pictures.map((item) => item.fileHash).join(";");
+    selectedDataFileHash +=
+      ";" + selectedData.files.map((item) => item.fileHash).join(";");
+
+    //get current page url
+    const currentUrl = window.location.href;
+    //get current server url
+    const currentServerUrl = window.location.origin;
+    //create a new url with the json string
+    const newUrl = `${currentServerUrl}/share?json=${selectedDataFileHash}`;
+
+    return newUrl;
+  };
+
+  const getSelectedItemsCount = () => {
+    return Object.values(selectedItems).filter(Boolean).length;
+  };
+
+  const checkIsMySpace = async (url: string) => {
+    try {
+      const params = new URLSearchParams(url.split("?")[1]);
+      const jsonParam = params.get("json");
+      let sharelinks = await getMySpaceDataByType("sharelinks");
+      return sharelinks.some((sharelink) => sharelink.url === jsonParam);
+    } catch (error) {
+      console.error("Error checking isMySpace:", error);
+      return false;
+    }
   };
 
   if (isLoading) {
@@ -107,35 +253,41 @@ export default function MySpace() {
             Upload File
           </button>
 
-          <button
-            className="
-              inline-flex items-center justify-center
-              bg-gradient-to-r from-indigo-500 to-indigo-600
-              text-white px-4 py-2 rounded-lg
-              shadow-md hover:shadow-lg
-              transform hover:scale-105
-              transition-all duration-200
-              font-medium
-            "
-            onClick={() => setIsShareModalOpen(true)}
-          >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-              />
-            </svg>
-            Create Share Link
-          </button>
+          <TooltipProvider>
+            <Tooltip open={showTooltip} onOpenChange={setShowTooltip}>
+              <TooltipTrigger asChild>
+                <div
+                  onClick={() => {
+                    if (getSelectedItemsCount() === 0) {
+                      setShowTooltip(true);
+                      // 自动隐藏提示
+                      setTimeout(() => setShowTooltip(false), 3000);
+                    }
+                  }}
+                >
+                  <Button
+                    onClick={handleShareClick}
+                    disabled={getSelectedItemsCount() === 0}
+                    className={
+                      getSelectedItemsCount() === 0
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }
+                  >
+                    Create Share Link{" "}
+                    {getSelectedItemsCount() > 0
+                      ? "(" + getSelectedItemsCount() + " items)"
+                      : ""}
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Please select files to share first</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-          <button
+          {/* <button
             onClick={() => setShowConfirmModal(true)}
             className="
               inline-flex items-center justify-center
@@ -161,7 +313,7 @@ export default function MySpace() {
               />
             </svg>
             Clear All
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -171,20 +323,17 @@ export default function MySpace() {
         onUpload={handleUpload}
       />
 
-      <ShareModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-      />
-
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         {TAB_OPTIONS.map((type) => (
           <div key={type} className="bg-white p-4 rounded-lg shadow">
             <h3 className="text-lg font-semibold mb-2">
-              {type.charAt(0).toUpperCase() + type.slice(1)}
+              {type === "sharelinks"
+                ? "Share Links"
+                : type.charAt(0).toUpperCase() + type.slice(1)}
             </h3>
             <p className="text-3xl font-bold text-blue-500">
-              {mediaData[type].length}
+              {mediaData[type]?.length}
             </p>
           </div>
         ))}
@@ -214,8 +363,16 @@ export default function MySpace() {
         {/* Videos Grid */}
         {activeTab === "videos" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mediaData.videos.map((video: Video) => (
-              <VideoCard key={video.id} video={video} />
+            {mediaData?.videos?.map((video: Video) => (
+              <div key={video.id} className="relative">
+                <input
+                  type="checkbox"
+                  className="absolute top-2 left-2 z-10 w-5 h-5"
+                  checked={selectedItems[video.id] || false}
+                  onChange={() => handleCheckboxChange(video.id)}
+                />
+                <VideoCard video={video} />
+              </div>
             ))}
           </div>
         )}
@@ -224,7 +381,15 @@ export default function MySpace() {
         {activeTab === "audios" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {mediaData.audios.map((audio: Music) => (
-              <AudioPlayer key={audio.id} music={audio} />
+              <div key={audio.id} className="relative">
+                <input
+                  type="checkbox"
+                  className="absolute top-2 left-2 z-10 w-5 h-5"
+                  checked={selectedItems[audio.id] || false}
+                  onChange={() => handleCheckboxChange(audio.id)}
+                />
+                <AudioPlayer music={audio} />
+              </div>
             ))}
           </div>
         )}
@@ -233,7 +398,15 @@ export default function MySpace() {
         {activeTab === "pictures" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {mediaData.pictures.map((picture: Picture) => (
-              <PictureCard key={picture.id} picture={picture} />
+              <div key={picture.id} className="relative">
+                <input
+                  type="checkbox"
+                  className="absolute top-2 left-2 z-10 w-5 h-5"
+                  checked={selectedItems[picture.id] || false}
+                  onChange={() => handleCheckboxChange(picture.id)}
+                />
+                <PictureCard picture={picture} />
+              </div>
             ))}
           </div>
         )}
@@ -242,13 +415,65 @@ export default function MySpace() {
         {activeTab === "files" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {mediaData.files.map((file: Video) => (
-              <FileDataCard key={file.id} file={file} />
+              <div key={file.id} className="relative">
+                <input
+                  type="checkbox"
+                  className="absolute top-2 left-2 z-10 w-5 h-5"
+                  checked={selectedItems[file.id] || false}
+                  onChange={() => handleCheckboxChange(file.id)}
+                />
+                <FileDataCard file={file} />
+              </div>
             ))}
+          </div>
+        )}
+        {activeTab === "sharelinks" && (
+          <div className="space-y-8">
+            {/* My Share Links */}
+            {mediaData.sharelinks.filter(
+              (sharelink) => sharelink.isMySpace === true
+            ).length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">My Share Links</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {mediaData.sharelinks
+                    .filter((sharelink) => sharelink.isMySpace === true)
+                    .map((sharelink: ShareLink) => (
+                      <ShareLinkCard key={sharelink.id} sharelink={sharelink} />
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Other Share Links */}
+            {/* {mediaData.sharelinks.filter(
+              (sharelink) => sharelink.isMySpace === false
+            ).length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">
+                  Shared Links With Me
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {mediaData.sharelinks
+                    .filter((sharelink) => sharelink.isMySpace === false)
+                    .map((sharelink: ShareLink) => (
+                      <ShareLinkCard key={sharelink.id} sharelink={sharelink} />
+                    ))}
+                </div>
+              </div>
+            )} */}
+
+            {/* No Share Links Message */}
+            {mediaData.sharelinks.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No share links available
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Custom Confirm Modal */}
+      {/* Custom clear all data Confirm Modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl transform transition-all">
@@ -314,6 +539,142 @@ export default function MySpace() {
           </div>
         </div>
       )}
+
+      {/* Share Modal */}
+      <Dialog
+        open={isShareModalOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseModal(); // Handle modal close from outside click or escape key
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          {/* Modal Header */}
+          <DialogHeader>
+            <DialogTitle>Create Share Link</DialogTitle>
+            <DialogDescription>
+              Fill in the details to create a share link for the selected items.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Form Content */}
+          <div className="grid gap-4 py-4">
+            {/* Title Input */}
+            <div className="grid gap-2">
+              <Label htmlFor="share-title">Title</Label>
+              <Input
+                id="share-title"
+                placeholder="Enter share title"
+                value={shareTitle}
+                onChange={(e) => setShareTitle(e.target.value)}
+              />
+            </div>
+
+            {/* Description Input */}
+            <div className="grid gap-2">
+              <Label htmlFor="share-description">Description</Label>
+              <Textarea
+                id="share-description"
+                placeholder="Enter share description"
+                value={shareDescription}
+                onChange={(e) => setShareDescription(e.target.value)}
+                className="h-24"
+              />
+            </div>
+
+            {/* Selected Items List */}
+            <div className="grid gap-2">
+              <Label>Selected Items</Label>
+              <div className="space-y-3 max-h-[200px] overflow-y-auto rounded-md border p-3">
+                {/* Videos Section */}
+                {getSelectedItemsByType().videos.length > 0 && (
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-semibold">
+                      Videos ({getSelectedItemsByType().videos.length})
+                    </h4>
+                    <ul className="text-sm text-muted-foreground pl-4">
+                      {getSelectedItemsByType().videos.map((video) => (
+                        <li key={video.id} className="truncate">
+                          {video.title || video.name || "Untitled Video"}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Audios Section */}
+                {getSelectedItemsByType().audios.length > 0 && (
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-semibold">
+                      Audios ({getSelectedItemsByType().audios.length})
+                    </h4>
+                    <ul className="text-sm text-muted-foreground pl-4">
+                      {getSelectedItemsByType().audios.map((audio) => (
+                        <li key={audio.id} className="truncate">
+                          {audio.title || audio.name || "Untitled Audio"}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Pictures Section */}
+                {getSelectedItemsByType().pictures.length > 0 && (
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-semibold">
+                      Pictures ({getSelectedItemsByType().pictures.length})
+                    </h4>
+                    <ul className="text-sm text-muted-foreground pl-4">
+                      {getSelectedItemsByType().pictures.map((picture) => (
+                        <li key={picture.id} className="truncate">
+                          {picture.title || picture.name || "Untitled Picture"}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Files Section */}
+                {getSelectedItemsByType().files.length > 0 && (
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-semibold">
+                      Files ({getSelectedItemsByType().files.length})
+                    </h4>
+                    <ul className="text-sm text-muted-foreground pl-4">
+                      {getSelectedItemsByType().files.map((file) => (
+                        <li key={file.id} className="truncate">
+                          {file.title || file.name || "Untitled File"}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* No Selection Message */}
+                {getSelectedItemsCount() === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-2">
+                    No items selected
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Footer */}
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseModal}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateShare}
+              disabled={!shareTitle.trim() || getSelectedItemsCount() === 0}
+            >
+              Create Link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

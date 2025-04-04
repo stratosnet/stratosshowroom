@@ -13,13 +13,23 @@ export default function PictureCard({ picture }: PictureCardProps) {
       picture.fileUri = getFileUri(picture.fileHash);
     }
   }, [picture]);
+
+  // Add click handler
+  const handleImageClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (picture.fileUri) {
+      window.open(picture.fileUri, "_blank");
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
       <div className="aspect-w-16 aspect-h-9 relative">
         <img
           src={picture.fileUri}
           alt={picture.title}
-          className="object-contain w-full h-full"
+          className="object-contain w-full h-full cursor-pointer"
+          onClick={handleImageClick}
         />
       </div>
       <div className="p-4">

@@ -9,8 +9,10 @@ export default function FileDataCard({ file }: FileDataCardProps) {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <div className="p-4">
-        <div className="flex items-center space-x-3 mb-2">
-          <FileIcon className="w-6 h-6 text-gray-500" />
+        <div
+          className="flex items-center space-x-3 mb-2"
+          style={{ marginLeft: "15px" }}
+        >
           <h3 className="font-semibold text-lg truncate">{file.title}</h3>
         </div>
 

@@ -31,7 +31,7 @@ const VideoThumbnail = ({
   const VIDEO_FRAME = 72;
   const STRATOS_GATEWAY = "spfs-gateway.thestratos.net";
 
-  // 设置最大加载大小为 5MB
+  // Set maximum load size to 5MB
   const MAX_BYTES = 5 * 1024 * 1024; // 5MB in bytes
 
   useEffect(() => {
@@ -55,7 +55,7 @@ const VideoThumbnail = ({
     if (!videoRef.current) return;
 
     try {
-      // 取消之前的请求
+      // Cancel previous request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -64,13 +64,13 @@ const VideoThumbnail = ({
       if (videoRef.current) {
         videoRef.current.src = getFileUri(fileHash);
         setHasVideoLoaded(true);
-        console.log("视频预览加载完成");
+        console.log("Video preview loaded successfully");
       }
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        console.log("取消加载视频预览");
+        console.log("Video preview loading cancelled");
       } else {
-        console.error("加载视频预览失败:", error);
+        console.error("Failed to load video preview:", error);
         setHasVideoLoaded(false);
       }
     }
@@ -82,7 +82,7 @@ const VideoThumbnail = ({
     }
 
     return () => {
-      // 清理工作
+      // Cleanup
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -160,11 +160,11 @@ const VideoThumbnail = ({
             if (videoRef.current) {
               videoRef.current.currentTime = 0;
               setHasVideoLoaded(true);
-              console.log("视频可以播放");
+              console.log("Video is ready to play");
             }
           }}
           onError={(e) => {
-            console.error("视频加载错误:", e);
+            console.error("Video loading error:", e);
             setHasVideoLoaded(false);
           }}
           onLoadedMetadata={() => {

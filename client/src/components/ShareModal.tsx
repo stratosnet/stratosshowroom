@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Video } from "@shared/schema";
-import { getMySpaceData } from "@/utils/localStorageData";
+import {
+  DEFAULT_DATA,
+  getMySpaceData,
+  MySpaceData,
+} from "@/utils/localStorageData";
 import {
   compressToEncodedURIComponent,
   decompressFromEncodedURIComponent,
@@ -15,9 +19,15 @@ export default function ShareModal({ isOpen, onClose }: ShareModalProps) {
   const [selectedItems, setSelectedItems] = useState<{
     [key: number]: boolean;
   }>({});
-  const data = getMySpaceData();
+  const [data, setData] = useState<MySpaceData>(DEFAULT_DATA);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-
+  useEffect(() => {
+    initData();
+  }, []);
+  const initData = async () => {
+    const data = await getMySpaceData();
+    setData(data);
+  };
   const handleCheckboxChange = (id: number) => {
     setSelectedItems((prev) => ({
       ...prev,
