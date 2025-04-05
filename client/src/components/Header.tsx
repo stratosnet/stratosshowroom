@@ -25,6 +25,7 @@ const Header = () => {
   const isMobile = useIsMobile();
   const [, navigate] = useLocation();
   const [showMySpaceButton, setShowMySpaceButton] = useState(true);
+  const [open, setOpen] = useState(false);
 
   // Use auth context safely with try/catch block to prevent errors during mounting
   let user = null;
@@ -236,36 +237,62 @@ const Header = () => {
                   <Link
                     href="/"
                     className="text-lg font-medium hover:text-primary"
+                    onClick={() => setOpen(false)}
                   >
                     Home
                   </Link>
                   <Link
                     href="/videos"
                     className="text-neutral-900 hover:text-primary px-3 py-2 text-sm font-medium"
+                    onClick={() => {
+                      setOpen(false);
+                      navigate("/videos");
+                      window.location.reload();
+                    }}
                   >
                     VIDEOS
                   </Link>
                   <Link
                     href="/audios"
                     className="text-neutral-900 hover:text-primary px-3 py-2 text-sm font-medium"
+                    onClick={() => {
+                      setOpen(false);
+                      navigate("/audios");
+                      window.location.reload();
+                    }}
                   >
                     AUDIO
                   </Link>
                   <Link
                     href="/pictures"
                     className="text-neutral-900 hover:text-primary px-3 py-2 text-sm font-medium"
+                    onClick={() => {
+                      setOpen(false);
+                      navigate("/pictures");
+                      window.location.reload();
+                    }}
                   >
                     PICTURE
                   </Link>
                   <Link
                     href="/myspace"
                     className="text-neutral-900 hover:text-primary px-3 py-2 text-sm font-medium"
+                    onClick={() => {
+                      setOpen(false);
+                      navigate("/myspace");
+                      window.location.reload();
+                    }}
                   >
                     MY SPACE
                   </Link>
                   <Link
                     href="/share?isSharePageWithMe=true"
                     className="text-neutral-900 hover:text-primary px-3 py-2 text-sm font-medium"
+                    onClick={() => {
+                      setOpen(false);
+                      navigate("/share?isSharePageWithMe=true");
+                      window.location.reload();
+                    }}
                   >
                     SHARED SPACE WITH ME
                   </Link>
