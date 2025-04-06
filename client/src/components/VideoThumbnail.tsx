@@ -21,6 +21,7 @@ const VideoThumbnail = ({
   isLoading = false,
   className = "",
 }: VideoThumbnailProps) => {
+  const [refreshed, setRefreshed] = useState(false);
   const [isImageError, setIsImageError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -122,6 +123,18 @@ const VideoThumbnail = ({
         .catch((error) => console.error("Error playing video:", error));
     }
   };
+  const checkVideoLoaded = () => {
+    console.log("videoRef.current?.readyState", videoRef.current?.readyState);
+    // check if video is loaded and  if have buffer data from videoRef.current?.buffered
+    if (
+      videoRef.current?.readyState >= 3 &&
+      videoRef.current?.buffered.length > 0
+    ) {
+      return true;
+    }
+
+    return false;
+  };
 
   const handleMouseLeave = () => {
     if (videoRef.current && hasVideoLoaded) {
@@ -141,56 +154,12 @@ const VideoThumbnail = ({
         src={`https://${fileHash}.ipfs.spfs-gateway.thestratos.net/?frame=25`}
         className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
       /> */}
-      {fileHash && !isImageError ? (
-        // <video
-        //   src={`https://${fileHash}.ipfs.spfs-gateway.thestratos.net/?frame=250`}
-        //   className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
-        // />
-        <video
-          ref={videoRef}
-          crossOrigin="anonymous"
-          muted
-          playsInline
-          loop={true}
-          preload="metadata"
-          x-webkit-playsinline="true"
-          webkit-playsinline="true"
-          onEnded={() => setIsPlaying(false)}
-          onLoadedData={() => {
-            if (videoRef.current) {
-              videoRef.current.currentTime = 0;
-              setHasVideoLoaded(true);
-              console.log("Video is ready to play");
-            }
-          }}
-          onError={(e) => {
-            console.error("Video loading error:", e);
-            setHasVideoLoaded(false);
-          }}
-          onLoadedMetadata={() => {
-            if (videoRef.current) {
-              videoRef.current.preload = "metadata";
-              videoRef.current.buffered;
-              if ("mediaSource" in window) {
-                videoRef.current.setBufferSize?.(1);
-              }
-            }
-          }}
-          className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
-          style={{
-            visibility: hasVideoLoaded ? "visible" : "hidden",
-            opacity: hasVideoLoaded ? 1 : 0,
-            transition: "visibility 0.3s, opacity 0.3s",
-          }}
-        />
-      ) : (
-        // <img
-        //   src={`https://${fileHash}.ipfs.spfs-gateway.thestratos.net/?frame=25`}
-        //   alt={title}
-        //   className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
-        //   onError={handleImageError}
-        // />
-        // Improved fallback placeholder with video icon
+      {/* show video thumbnail when video is not loaded */}
+      {/* {videoRef.current?.readyState}/
+      {JSON.stringify(videoRef.current?.buffered.length)}/
+      {JSON.stringify(videoRef.current?.duration)}
+      {JSON.stringify(hasVideoLoaded)} */}
+      {videoRef.current?.buffered.length === 0 && (
         <div className="w-full h-full aspect-video bg-gradient-to-br from-gray-800 to-gray-900 flex flex-col items-center justify-center">
           <svg
             className={`${
@@ -216,7 +185,61 @@ const VideoThumbnail = ({
           </span>
         </div>
       )}
-
+      {fileHash && !isImageError ? (
+        // <video
+        //   src={`https://${fileHash}.ipfs.spfs-gateway.thestratos.net/?frame=250`}
+        //   className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
+        // />
+        <video
+          ref={videoRef}
+          crossOrigin="anonymous"
+          muted
+          autoPlay={true}
+          playsInline
+          loop={true}
+          preload="metadata"
+          x-webkit-playsinline="true"
+          webkit-playsinline="true"
+          onEnded={() => setIsPlaying(false)}
+          onLoadedData={() => {
+            if (videoRef.current) {
+              videoRef.current.currentTime = 0;
+              setHasVideoLoaded(true);
+              console.log("Video is ready to play");
+            }
+          }}
+          onError={(e) => {
+            console.error("Video loading error:", e);
+            setHasVideoLoaded(false);
+          }}
+          onLoadedMetadata={() => {
+            if (videoRef.current) {
+              videoRef.current.preload = "metadata";
+              videoRef.current.buffered;
+              if ("mediaSource" in window) {
+                videoRef.current.setBufferSize?.(1);
+                setHasVideoLoaded(true);
+              }
+            }
+            setRefreshed(!refreshed);
+          }}
+          className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
+          style={{
+            visibility: hasVideoLoaded ? "visible" : "hidden",
+            opacity: hasVideoLoaded ? 1 : 0,
+            transition: "visibility 0.3s, opacity 0.3s",
+          }}
+        />
+      ) : (
+        // <img
+        //   src={`https://${fileHash}.ipfs.spfs-gateway.thestratos.net/?frame=25`}
+        //   alt={title}
+        //   className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
+        //   onError={handleImageError}
+        // />
+        // Improved fallback placeholder with video icon
+        <div></div>
+      )}
       {duration !== undefined && duration !== null && (
         <span
           className={`absolute ${
@@ -228,7 +251,6 @@ const VideoThumbnail = ({
           {formatDuration(duration)}
         </span>
       )}
-
       {/* Only show play button overlay on hover if onClick is provided */}
       {onClick && (
         <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">

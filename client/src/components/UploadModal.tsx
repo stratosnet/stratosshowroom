@@ -98,6 +98,7 @@ function UploadModalComponent({
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
 
+  const maxFileSize = 100 * 1024 * 1024; // Default max size: 100MB
   // Setup form for video details
   const form = useForm<UploadVideo>({
     resolver: zodResolver(uploadVideoSchema),
@@ -135,6 +136,17 @@ function UploadModalComponent({
     //   return;
     // }
 
+    // check file size
+    if (file.size > maxFileSize) {
+      toast({
+        title: "File too large",
+        description: `Please upload a file smaller than ${
+          maxFileSize / (1024 * 1024)
+        }MB`,
+        variant: "destructive",
+      });
+      return;
+    }
     setSelectedFile(file);
 
     // Auto-fill title from filename
@@ -463,6 +475,18 @@ function UploadModalComponent({
               }
 
               const file = files[0];
+              // check file size
+              if (file.size > maxFileSize) {
+                toast({
+                  title: "File too large",
+                  description: `Please upload a file smaller than ${
+                    maxFileSize / (1024 * 1024)
+                  }MB`,
+                  variant: "destructive",
+                });
+                return;
+              }
+
               setSelectedFile(file);
 
               // Auto-fill title from filename
@@ -478,7 +502,10 @@ function UploadModalComponent({
               Drop a file here, or click to select
             </h3>
             <p className="text-neutral-600 mb-4">
-              Only one file can be uploaded at a time
+              Only one file can be uploaded at a time.
+            </p>
+            <p className="text-neutral-600 mb-4">
+              The file size must be less than 100MB!
             </p>
             <Button
               onClick={triggerFileInput}
