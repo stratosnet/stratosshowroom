@@ -28,7 +28,7 @@ export default function PictureCard({ picture }: PictureCardProps) {
         <img
           src={picture.fileUri}
           alt={picture.title}
-          className="object-contain w-full h-full cursor-pointer"
+          className="object-contain object-top w-full aspect-[2.3/3] cursor-pointer"
           onClick={handleImageClick}
         />
       </div>

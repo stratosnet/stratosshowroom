@@ -15,6 +15,8 @@ import { log } from "../vite";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const maxFileSize = 100 * 1024 * 1024; // 100MB
+
 // Configure multer for video uploads
 const upload = multer({
   storage: multer.diskStorage({
@@ -149,15 +151,22 @@ router.post("/upload", upload.fields([
   { name: "thumbnail", maxCount: 1 }
 ]), async (req: Request, res: Response) => {
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-  
-  try {
-    if (!files || !files.file || files.file.length === 0) {
-      return res.status(400).json({ message: "No video file provided" });
-    }
-    
-    const videoFile = files.file[0];
-    const thumbnailFile = files.thumbnail ? files.thumbnail[0] : null;
+ 
+  if (!files || !files.file || files.file.length === 0) {
+    return res.status(400).json({ message: "No video file provided" });
+  }
 
+
+  const videoFile = files.file[0];
+  const thumbnailFile = files.thumbnail ? files.thumbnail[0] : null;
+ 
+  try {
+   
+      // check file size  
+     if (videoFile?.size > maxFileSize) {
+       return res.status(400).json({ message: "File size too large" });
+     }
+  
     // const userId = getCurrentUserId(req);
     // if (!userId) {
     //   return res.status(401).json({ message: "Not authenticated" });
@@ -196,11 +205,11 @@ router.post("/upload", upload.fields([
       duration
     }= uploadResult;
     // Check if thumbnail generation was successful
-    const thumbnailUri = await generateThumbnailUri(fileHash, thumbnailFile || undefined);
-    if (!thumbnailUri) {
-      log("Failed to generate thumbnail", "routes");
-      return res.status(500).json({ error: "Failed to generate thumbnail" });
-    }
+    const thumbnailUri = ""; //await generateThumbnailUri(fileHash, thumbnailFile || undefined);
+    // if (!thumbnailUri) {
+    //   log("Failed to generate thumbnail", "routes");
+    //   return res.status(500).json({ error: "Failed to generate thumbnail" });
+    // }
     
     // Proceed with video creation if both operations were successful
     // const video = await storage.createVideo({
@@ -266,7 +275,18 @@ router.post("/upload", upload.fields([
       message: "Failed to upload video", 
       error: error instanceof Error ? error.message : String(error)
     });
+    }finally{
+    // Clean up temporary files after successful upload
+    try {
+      fs.unlinkSync(videoFile.path);
+      if (thumbnailFile) {
+        fs.unlinkSync(thumbnailFile.path);
+      }
+    } catch (cleanupError) {
+      log(`Error cleaning up temporary files after error: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`, "routes");
+    }
   }
+  
 });
 
 // /**

@@ -52,8 +52,20 @@ const VideosPage = () => {
         const viewsB = b.views || 0;
         return viewsB - viewsA;
       });
-      setFeaturedVideo(sorted[0]);
     }
+    let featuredVideo = {
+      cid: "",
+      cidUri: "",
+      type: "video/mp4",
+      fileHash: "bafybeictblsvwrpi4pftsic5asdbcgb55qzmp4b4gjkxnno6jxw7mzqi4q",
+      fileUri: "",
+      title: "F1 Official Trailer",
+      description: "Official Formula 1 trailer showcasing racing excitement",
+      category: "Sports",
+      size: 12582912,
+      duration: 90,
+    };
+    setFeaturedVideo(featuredVideo as ExtendedVideo);
   }, [apiVideos]);
 
   // Filter videos by category

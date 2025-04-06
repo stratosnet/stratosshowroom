@@ -226,30 +226,30 @@ export async function seedSampleVideo() {
         category: 'Travel',
         duration: 240
       },
-      {
-        cid: "",
-        cidUri:"",
-        type: "image/png",
-        title: "appstore",
-        description: "",
-        fileHash: "QmekANfKc2o8ZSPq1j5pRCRuarRX3swVDietJb7ffyft7A",
-        fileUri: "",
-        duration: 0,
-        size: 92505,
-        category: "Blockchain",
-      },
-      {
-        cid: "",
-        cidUri: "",
-        type: "image/svg+xml",
-        title: "favion",
-        description: "",
-        fileHash: "QmbJwwDpYyjJMMCezJBpgPR5zP2f6DMFrr8DwUuRFjRBw2",
-        fileUri: "",
-        duration: 0,
-        size: 1780,
-        category: "Blockchain",
-      },
+      // {
+      //   cid: "",
+      //   cidUri:"",
+      //   type: "image/png",
+      //   title: "appstore",
+      //   description: "",
+      //   fileHash: "QmekANfKc2o8ZSPq1j5pRCRuarRX3swVDietJb7ffyft7A",
+      //   fileUri: "",
+      //   duration: 0,
+      //   size: 92505,
+      //   category: "Blockchain",
+      // },
+      // {
+      //   cid: "",
+      //   cidUri: "",
+      //   type: "image/svg+xml",
+      //   title: "favion",
+      //   description: "",
+      //   fileHash: "QmbJwwDpYyjJMMCezJBpgPR5zP2f6DMFrr8DwUuRFjRBw2",
+      //   fileUri: "",
+      //   duration: 0,
+      //   size: 1780,
+      //   category: "Blockchain",
+      // },
       {
         cid: "",
         cidUri: "",
@@ -261,11 +261,90 @@ export async function seedSampleVideo() {
         duration: 0,
         size: 7373059,
         category: "",
-      }
+      },
 
+//https://spfs-gateway.thestratos.net/ipfs/QmUCgwAKmAiTic7Lz1gm9L53HKtfQ8hx42tHo2cdY5bjWA
+//https://spfs-gateway.thestratos.net/ipfs/QmcguvPEm5p5vMRYjBJeWHZkH2SEp96ndFq4QBf8pHmRfA
+//https://spfs-gateway.thestratos.net/ipfs/QmapNRPVTvCDZsuR6iXqEuEPcBNtaZAsuGvjdDC3y8YdoX
+//https://spfs-gateway.thestratos.net/ipfs/QmQSFAUt8UKw4FKC7rNWrcUgYk7YazFZox7n9yvWVQMRq7
+//https://spfs-gateway.thestratos.net/ipfs/QmezgViSfd4VseYhZpAXR1LaFQuy8KghC25T5yuAXAHw9k
+//https://spfs-gateway.thestratos.net/ipfs/QmTsQJYQj6tHnniESGUDDpxpQpZjhrtEi5UAEU57FFT59i
+{
+  cid: "",
+  cidUri:"",
+  type: "image/jpeg",
+  title: "sample image 1",
+  description: "",
+  fileHash: "QmQSFAUt8UKw4FKC7rNWrcUgYk7YazFZox7n9yvWVQMRq7",
+  fileUri: "",
+  duration: 0,
+  size: -1,
+  category: "",
+},
+{
+  cid: "",
+  cidUri:"",
+  type: "image/jpeg",
+  title: "sample image 1",
+  description: "",
+  fileHash: "QmTsQJYQj6tHnniESGUDDpxpQpZjhrtEi5UAEU57FFT59i",
+  fileUri: "",
+  duration: 0,
+  size: -1,
+  category: "",
+},
 
+{
+  cid: "",
+  cidUri:"",
+  type: "image/jpeg",
+  title: "sample image 2",
+  description: "",
+  fileHash: "QmezgViSfd4VseYhZpAXR1LaFQuy8KghC25T5yuAXAHw9k",
+  fileUri: "",
+  duration: 0,
+  size: -1,
+  category: "",
+},
 
+{
+  cid: "",
+  cidUri:"",
+  type: "image/jpeg",
+  title: "sample image 3",
+  description: "",
+  fileHash: "QmapNRPVTvCDZsuR6iXqEuEPcBNtaZAsuGvjdDC3y8YdoX",
+  fileUri: "",
+  duration: 0,
+  size: -1,
+  category: "",
+},
       
+      {
+        cid: "",
+        cidUri:"",
+        type: "image/jpeg",
+        title: "sample image 4",
+        description: "",
+        fileHash: "QmUCgwAKmAiTic7Lz1gm9L53HKtfQ8hx42tHo2cdY5bjWA",
+        fileUri: "",
+        duration: 0,
+        size: -1,
+        category: "",
+      },
+      {
+        cid: "",
+        cidUri:"",
+        type: "image/jpeg 5",
+        title: "sample image",
+        description: "",
+        fileHash: "QmcguvPEm5p5vMRYjBJeWHZkH2SEp96ndFq4QBf8pHmRfA",
+        fileUri: "",
+        duration: 0,
+        size: -1,
+        category: "",
+      },
+
     ];
     
     // Process all videos sequentially

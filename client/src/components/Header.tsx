@@ -47,6 +47,43 @@ const Header = () => {
     console.log("Searching for:", searchQuery);
   };
 
+  const [view, setView] = useState(""); //videos, audios, pictures, myspace, share
+
+  const checkView = async () => {
+    console.log("checkView", window.location.href); // http://localhost:3003/videos?xxx=xxx
+    const href = new URL(window.location.href);
+    const path = href.pathname;
+    console.log("href", href);
+    console.log("path", path);
+    switch (path) {
+      case "/videos":
+        setView("videos");
+        console.log("videos");
+        break;
+      case "/audios":
+        setView("audios");
+        console.log("audios");
+        break;
+      case "/pictures":
+        setView("pictures");
+        console.log("pictures");
+        break;
+      case "/myspace":
+        setView("myspace");
+        console.log("myspace");
+        break;
+      case "/share":
+        let view = await isMySharePage();
+        setView(view);
+        console.log("view", view);
+        break;
+
+      default:
+        setView("videos");
+        console.log("videos");
+        break;
+    }
+  };
   const isMySharePage = async () => {
     const params = new URLSearchParams(window.location.search);
     const jsonParam = params.get("json") || null;
@@ -54,10 +91,6 @@ const Header = () => {
 
     if (jsonParam) {
       for (const sharelink of sharelinkList) {
-        // if (window.location.href.includes(sharelink.url)) {
-        //   return true;
-        // }
-
         const sharelinkUrl = sharelink.url?.split("share?json=")[0];
         const jsonParamWithoutShareLink = sharelink.url?.replace(
           sharelinkUrl + "share?json=",
@@ -65,24 +98,18 @@ const Header = () => {
         );
         let isSharePage =
           jsonParamWithoutShareLink === jsonParam && sharelink.isMySpace;
-
         if (isSharePage) {
-          return true;
+          return "myspace";
         }
       }
-      return false;
+      return "sharedview";
     }
-
-    if (window.location.href.includes("isSharePageWithMe=true")) {
-      return false;
-    }
-    return true;
+    return "sharedview";
   };
 
   useEffect(() => {
     const checkSharePage = async () => {
-      const isShare = await isMySharePage();
-      setShowMySpaceButton(isShare);
+      await checkView();
     };
 
     checkSharePage();
@@ -133,7 +160,7 @@ const Header = () => {
               <Link
                 href="/myspace"
                 className={
-                  showMySpaceButton
+                  view === "myspace"
                     ? `
                   bg-gray-600 
                   hover:bg-gray-700
@@ -145,24 +172,35 @@ const Header = () => {
                   hover:scale-105
                   hover:brightness-110
                 `
-                    : "text-neutral-900 hover:text-primary px-3 py-2 text-sm font-medium"
+                    : `text-neutral-900 
+                       hover:text-primary 
+                       hover:bg-gray-700
+                       inline-flex items-center justify-center
+                       px-4 py-2 rounded-md
+                       font-semibold text-sm
+                       shadow-md hover:shadow-lg
+                       transition-all duration-200 ease-in-out
+                       hover:scale-105
+                       hover:brightness-110
+                       text-sm font-medium 
+                       outline outline-1 
+                       outline-neutral-200 
+                       hover:outline-primary `
                 }
               >
-                {showMySpaceButton && (
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                    />
-                  </svg>
-                )}
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
                 MY SPACE
               </Link>
 
@@ -173,7 +211,7 @@ const Header = () => {
                   window.location.reload();
                 }}
                 className={
-                  !showMySpaceButton
+                  view === "sharedview"
                     ? `
                        inline-flex items-center justify-center
                        px-4 py-2 rounded-md
@@ -183,24 +221,35 @@ const Header = () => {
                       transition-all duration-200 ease-in-out
                       hover:scale-105
                      hover:brightness-110`
-                    : "text-neutral-900 hover:text-primary px-3 py-2 text-sm font-medium"
+                    : `text-neutral-900 
+                       hover:text-primary 
+                       hover:bg-gray-700
+                       inline-flex items-center justify-center
+                       px-4 py-2 rounded-md
+                       font-semibold text-sm
+                       shadow-md hover:shadow-lg
+                       transition-all duration-200 ease-in-out
+                       hover:scale-105
+                       hover:brightness-110
+                       text-sm font-medium 
+                       outline outline-1 
+                       outline-neutral-200 
+                       hover:outline-primary `
                 }
               >
-                {!showMySpaceButton && (
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                    />
-                  </svg>
-                )}
+                {/* <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg> */}
                 SHARED SPACE WITH ME
               </Link>
               {/* <Link
