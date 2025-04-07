@@ -11,7 +11,7 @@ export default function FileDataCard({ file }: FileDataCardProps) {
       <div className="p-4">
         <div
           className="flex items-center space-x-3 mb-2"
-          style={{ marginLeft: "15px" }}
+          style={{ marginLeft: "20px" }}
         >
           <h3 className="font-semibold text-lg truncate">{file.title}</h3>
         </div>

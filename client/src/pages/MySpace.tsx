@@ -224,7 +224,7 @@ export default function MySpace() {
       {/* Header Section with Upload Buttons */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold">My Space</h1>
-        <div className="flex space-x-4">
+        <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4">
           <button
             className="
               inline-flex items-center justify-center
@@ -324,15 +324,27 @@ export default function MySpace() {
       />
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-3 md:grid-cols-5 gap-4 mb-8">
         {TAB_OPTIONS.map((type) => (
-          <div key={type} className="bg-white p-4 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-2">
+          <div
+            key={type}
+            className="bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
+            onClick={() => setActiveTab(type)}
+          >
+            <h3
+              className={`text-lg font-semibold mb-2 ${
+                true ? "text-blue-600" : "text-gray-700"
+              }`}
+            >
               {type === "sharelinks"
                 ? "Share Links"
                 : type.charAt(0).toUpperCase() + type.slice(1)}
             </h3>
-            <p className="text-3xl font-bold text-blue-500">
+            <p
+              className={`text-3xl font-bold ${
+                true ? "text-blue-500" : "text-gray-500"
+              }`}
+            >
               {mediaData[type]?.length}
             </p>
           </div>
@@ -341,12 +353,12 @@ export default function MySpace() {
 
       {/* Navigation Tabs */}
       <div className="border-b border-gray-200 mb-6">
-        <nav className="flex space-x-8">
+        <nav className="flex min-w-max">
           {TAB_OPTIONS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-2 border-b-2 font-medium text-[10px] leading-tight sm:text-sm sm:px-4 sm:py-4 whitespace-nowrap ${
                 activeTab === tab
                   ? "border-blue-500 text-blue-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -436,6 +448,7 @@ export default function MySpace() {
                 <input
                   type="checkbox"
                   className="absolute top-2 left-2 z-10 w-5 h-5"
+                  style={{ marginTop: "12px" }}
                   checked={selectedItems[file.id] || false}
                   onChange={() => handleCheckboxChange(file.id)}
                 />
