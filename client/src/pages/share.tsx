@@ -370,7 +370,7 @@ export default function SharePage() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  Add to MySpaceded
+                  Add to MySpace
                 </Button>
               ) : (
                 <Button
